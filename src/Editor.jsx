@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   Save,
   Link,
@@ -30,6 +30,27 @@ export default function Editor({ id, token, navigate, notify }) {
     [finalOpen, setFinalOpen] = useState(false),
     [loadError, setLoadError] = useState(""),
     [showComments, setShowComments] = useState(false);
+  const descriptionRef = useRef(null);
+  useLayoutEffect(() => {
+    const field = descriptionRef.current;
+    if (!field) return;
+    const resize = () => {
+      field.style.height = "auto";
+      const borderHeight = field.offsetHeight - field.clientHeight;
+      field.style.height = `${field.scrollHeight + borderHeight}px`;
+    };
+    resize();
+    let width = field.getBoundingClientRect().width;
+    const observer = new ResizeObserver(() => {
+      const nextWidth = field.getBoundingClientRect().width;
+      if (Math.abs(nextWidth - width) > 0.5) {
+        width = nextWidth;
+        resize();
+      }
+    });
+    observer.observe(field);
+    return () => observer.disconnect();
+  }, [document?.description, tab, survey?.status]);
   const dirty = Boolean(
       survey &&
       document &&
@@ -371,7 +392,9 @@ export default function Editor({ id, token, navigate, notify }) {
               )}
               {editable ? (
                 <textarea
+                  ref={descriptionRef}
                   id="target-description"
+                  rows={8}
                   aria-label="问卷说明"
                   className="document-description"
                   value={document.description}

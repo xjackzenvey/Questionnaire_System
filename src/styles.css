@@ -674,7 +674,7 @@ small {
   color: #74818e;
   margin: 14px 0 0;
   padding: 0;
-  min-height: 64px;
+  min-height: 180px;
   background: transparent;
   resize: vertical;
 }
