@@ -1,0 +1,14 @@
+services:
+  questionnaire:
+    build:
+      context: .
+      args:
+        APP_BASE_PATH: ${APP_BASE_PATH:-/}
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      TRUST_PROXY: "1"
+    ports:
+      - "127.0.0.1:3001:3001"
