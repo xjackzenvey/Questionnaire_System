@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { documentSchema, exportText, targets } from "../server/document.js";
+import { questionParts } from "../shared/question.js";
 const doc = () => ({
   title: "测试问卷",
   description: "问卷说明",
@@ -17,6 +18,23 @@ const doc = () => ({
       ],
     },
   ],
+});
+test("section headings support legacy imports, editing, comments and export", () => {
+  const d = doc();
+  const q = d.questions[0];
+  q.title = "第三部分：AI 工具付费经历｜Q11. 你目前属于以下哪种情况？";
+  assert.deepEqual(questionParts(q), { sectionTitle: "第三部分：AI 工具付费经历", title: "Q11. 你目前属于以下哪种情况？" });
+  assert.equal(targets(d).get(`${q.id}-section`), "第三部分：AI 工具付费经历");
+  Object.assign(q, questionParts(q));
+  assert.equal(documentSchema.parse(d).questions[0].sectionTitle, q.sectionTitle);
+  for (const platform of ["wjx", "tencent"]) {
+    const out = exportText(d, platform);
+    assert.ok(out.text.includes("第三部分：AI 工具付费经历｜Q11."));
+    assert.ok(out.warnings.some((w) => w.includes("独立分区")));
+  }
+  q.sectionTitle = "bad\nheading";
+  assert.equal(documentSchema.safeParse(d).success, false);
+  assert.deepEqual(questionParts({ title: "普通题目｜选项说明" }), { sectionTitle: "", title: "普通题目｜选项说明" });
 });
 test("validates choices and stable identifiers", () => {
   const d = doc();

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { questionParts } from "../shared/question.js";
 const id = z.string().uuid();
 const oneLine = z
   .string()
@@ -16,6 +17,7 @@ export const documentSchema = z
           id,
           type: z.enum(["single", "multiple", "text", "textarea", "rating"]),
           title: oneLine,
+          sectionTitle: z.string().trim().max(300).refine((s) => !/[\r\n]/.test(s), "分区标题不能包含换行").optional(),
           required: z.boolean(),
           options: z.array(z.object({ id, text: oneLine })).max(100),
         }),
@@ -41,6 +43,7 @@ export function targets(doc) {
     ["description", doc.description],
     ...doc.questions.flatMap((q) => [
       [q.id, q.title],
+      [`${q.id}-section`, questionParts(q).sectionTitle],
       ...q.options.map((o) => [o.id, o.text]),
     ]),
   ]);
@@ -65,6 +68,8 @@ export function exportText(doc, platform) {
   const warnings = [
     "导入后请核对题型、题目顺序、选项和必填设置；本文件不包含批注。",
   ];
+  if (doc.questions.some((q) => questionParts(q).sectionTitle))
+    warnings.push("分区标题已合并到对应题目前，导入后请在目标平台设置独立分区标题。");
   if (doc.questions.some((q) => q.required))
     warnings.push(
       platform === "tencent"
@@ -86,6 +91,7 @@ export function exportText(doc, platform) {
       doc.description,
       ...doc.questions.flatMap((q) => [
         q.title,
+        questionParts(q).sectionTitle,
         ...q.options.map((o) => o.text),
       ]),
     ].some((s) => /[\[\]]/.test(s))
@@ -95,10 +101,13 @@ export function exportText(doc, platform) {
     );
   if (platform === "tencent" && /[\r\n]/.test(doc.description))
     warnings.push("腾讯问卷导入引导语中的换行已合并为空格。");
-  const questions = doc.questions.flatMap((q, i) => [
+  const questions = doc.questions.flatMap((q, i) => {
+    const parts = questionParts(q);
+    const title = parts.sectionTitle ? `${parts.sectionTitle}｜${parts.title}` : parts.title;
+    return [
     platform === "tencent"
-      ? `${clean(q.title)}[${types[q.type]}][${q.required ? "必答" : "选答"}]`
-      : `${i + 1}. ${clean(q.title)} [${types[q.type]}]`,
+      ? `${clean(title)}[${types[q.type]}][${q.required ? "必答" : "选答"}]`
+      : `${i + 1}. ${clean(title)} [${types[q.type]}]`,
     ...(["single", "multiple"].includes(q.type)
       ? q.options.map((o, j) =>
           platform === "tencent"
@@ -109,7 +118,8 @@ export function exportText(doc, platform) {
         ? ["1~5"]
         : []),
     "",
-  ]);
+  ];
+  });
   return {
     warnings,
     text: [

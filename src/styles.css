@@ -692,6 +692,25 @@ small {
   margin-bottom: 13px;
   scroll-margin-top: 12px;
 }
+.survey-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 30px 0 16px;
+  padding: 8px 0 8px 14px;
+  border-left: 4px solid #1677ff;
+}
+.survey-section h2, .survey-section input {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.6;
+  color: #1f2937;
+}
+.survey-section h2 { overflow-wrap: anywhere; }
+.survey-section input { width: 100%; background: transparent; }
 .question.selected {
   border-color: #91bfff;
 }

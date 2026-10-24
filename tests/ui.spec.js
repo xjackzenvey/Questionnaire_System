@@ -45,9 +45,14 @@ test("owner and reviewer can complete the browser workflow", async ({
       new RegExp(`^${prefix}/surveys/`),
     );
     await page.reload({ waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("networkidle");
     await expect(page.getByLabel("问卷标题", { exact: true })).toHaveValue(
       "用户体验调研",
     );
+    await page.getByLabel("问题 1 标题", { exact: true }).fill("第三部分：AI 工具付费经历｜Q11. 你目前属于以下哪种情况？");
+    await expect(page.getByLabel("问题 1 前的分区标题")).toHaveValue("第三部分：AI 工具付费经历");
+    await expect(page.getByLabel("问题 1 标题", { exact: true })).toHaveValue("Q11. 你目前属于以下哪种情况？");
+    await page.getByLabel("问题 1 前的分区标题").fill("第三部分：付费经历");
     await page
       .getByRole("button", { name: "添加问题", exact: true })
       .first()
@@ -80,6 +85,8 @@ test("owner and reviewer can complete the browser workflow", async ({
     reviewer.on("pageerror", (e) => errors.push(e.message));
     await reviewer.goto(link);
     await expect(reviewer.getByText("只能批注，不可修改")).toBeVisible();
+    await expect(reviewer.getByRole("heading", { name: "第三部分：付费经历", exact: true })).toBeVisible();
+    await expect(reviewer.locator(".question-header h3").first()).toHaveText("Q11. 你目前属于以下哪种情况？*");
     await expect(
       reviewer.getByRole("button", { name: "保存", exact: true }),
     ).toHaveCount(0);

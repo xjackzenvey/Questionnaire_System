@@ -16,6 +16,7 @@ import { Button, Modal, Empty } from "./ui";
 import Question from "./Question";
 import Comments from "./Comments";
 import Versions from "./Versions";
+import { questionParts } from "../shared/question";
 export default function Editor({ id, token, navigate, notify }) {
   const guest = Boolean(token),
     endpoint = guest ? `/review/${token}` : `/surveys/${id}`;
@@ -345,7 +346,8 @@ export default function Editor({ id, token, navigate, notify }) {
                 >
                   <span>{i + 1}</span>
                   <div>
-                    <strong>{q.title}</strong>
+                    {questionParts(q).sectionTitle && <small>{questionParts(q).sectionTitle}</small>}
+                    <strong>{questionParts(q).title}</strong>
                     <small>{TYPES[q.type]}</small>
                   </div>
                 </button>

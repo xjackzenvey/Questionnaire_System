@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { api, date } from "./api";
 import { Button, Empty } from "./ui";
+import { questionParts } from "../shared/question";
 export default function Comments({
   survey,
   comments,
@@ -31,6 +32,7 @@ export default function Comments({
     ["description", survey.document.description],
     ...survey.document.questions.flatMap((q) => [
       [q.id, q.title],
+      [`${q.id}-section`, questionParts(q).sectionTitle],
       ...q.options.map((o) => [o.id, o.text]),
     ]),
   ]);

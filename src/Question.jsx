@@ -1,6 +1,7 @@
 import { Plus, Trash2, ArrowUp, ArrowDown, MessageSquare } from "lucide-react";
 import { TYPES } from "./api";
 import { Button } from "./ui";
+import { questionParts } from "../shared/question";
 export default function Question({
   question: q,
   index,
@@ -13,6 +14,10 @@ export default function Question({
   setTarget,
   comments,
 }) {
+  const { sectionTitle, title } = questionParts(q);
+  function change(patch) {
+    onChange({ ...q, title, sectionTitle, ...patch });
+  }
   function target(id, quote) {
     setTarget({ id, quote });
   }
@@ -27,6 +32,21 @@ export default function Question({
     });
   }
   return (
+    <>
+      {sectionTitle && (
+        <div className="survey-section" id={`target-${q.id}-section`}>
+          {editable ? (
+            <input aria-label={`问题 ${index + 1} 前的分区标题`} value={sectionTitle}
+              placeholder="分区标题（留空可移除）"
+              onChange={(e) => change({ sectionTitle: e.target.value })}
+              onFocus={() => target(`${q.id}-section`, sectionTitle)} />
+          ) : (
+            <h2 onMouseUp={() => selectText(`${q.id}-section`, sectionTitle)}>{sectionTitle}</h2>
+          )}
+          {sectionTitle && <button className="icon-button" aria-label="批注分区标题"
+            onClick={() => target(`${q.id}-section`, sectionTitle)}><MessageSquare size={18} /></button>}
+        </div>
+      )}
     <article
       id={"target-" + q.id}
       className={`question ${selected ? "selected" : ""}`}
@@ -38,13 +58,13 @@ export default function Question({
           <input
             aria-label={`问题 ${index + 1} 标题`}
             className="question-title"
-            value={q.title}
+            value={title}
             onFocus={() => target(q.id, q.title)}
-            onChange={(e) => onChange({ ...q, title: e.target.value })}
+            onChange={(e) => change(sectionTitle ? { title: e.target.value } : questionParts({ title: e.target.value }))}
           />
         ) : (
           <h3 onMouseUp={() => selectText(q.id, q.title)}>
-            {q.title}
+            {title}
             {q.required && <span className="required">*</span>}
           </h3>
         )}
@@ -63,6 +83,7 @@ export default function Question({
       </header>
       {editable && (
         <div className="question-settings">
+          {!sectionTitle && <Button variant="text-button" onClick={() => change({ sectionTitle: "新分区" })}>添加分区标题</Button>}
           <select
             aria-label={`问题 ${index + 1} 题型`}
             value={q.type}
@@ -219,5 +240,6 @@ export default function Question({
         />
       )}
     </article>
+    </>
   );
 }
